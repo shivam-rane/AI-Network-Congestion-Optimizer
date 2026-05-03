@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.streamlit/
+
+data/raw/*.csv
+data/processed/*.csv
+
+models/*.pkl
+models/*.json
+logs/*.log
+
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!docs/images/.gitkeep
