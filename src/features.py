@@ -24,11 +24,19 @@ def create_features(df):
         df["Total Backward Packets"] / (df["Total Fwd Packets"] + 1)
     )
 
-    # --- Target Variable ---
-    df["congestion"] = (
-        (df["latency"] > df["latency"].quantile(0.75)) |
-        (df["packet_loss"] > 0.3)
-    ).astype(int)
+    # --- Target Variable (from CICIDS Label) ---
+    # Use actual attack labels from dataset instead of derived thresholds
+    # This prevents data leakage where target is derived from input features
+    if " Label" in df.columns:
+        df["congestion"] = (df[" Label"] != "BENIGN").astype(int)
+    elif "Label" in df.columns:
+        df["congestion"] = (df["Label"] != "BENIGN").astype(int)
+    else:
+        # Fallback: if no Label column, derive from thresholds (less ideal but functional)
+        df["congestion"] = (
+            (df["latency"] > df["latency"].quantile(0.75)) |
+            (df["packet_loss"] > 0.3)
+        ).astype(int)
 
     # Drop invalid rows
     df = df.replace([float("inf"), -float("inf")], 0)
