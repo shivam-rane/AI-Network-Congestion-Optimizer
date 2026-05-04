@@ -14,6 +14,7 @@ import streamlit as st
 import joblib
 import streamlit.components.v1 as components
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.model_selection import train_test_split
 
 try:
     import shap
@@ -179,13 +180,33 @@ def compute_dashboard_metrics(df: pd.DataFrame) -> dict:
 
 @st.cache_data
 def compute_model_metrics(_model, df: pd.DataFrame) -> dict:
-    """Evaluate the loaded model against real dashboard features."""
-    eval_df = clean_plot_df(df, FEATURE_COLUMNS + ["congestion"])
-    if len(eval_df) > VIZ_SAMPLE_SIZE:
-        eval_df = eval_df.sample(VIZ_SAMPLE_SIZE, random_state=42)
+    """Evaluate the loaded model on test set only (avoiding overfitting assessment).
+    
+    Uses 80/20 train/test split with random_state=42 to match training pipeline.
+    Evaluates metrics ONLY on test set for realistic generalization performance.
+    """
+    # Clean data first
+    eval_df = clean_plot_df(df, FEATURE_COLUMNS + ["congestion"]).copy()
+    
+    # Perform 80/20 split to get test set (matches training split)
+    X_train, X_test, y_train, y_test = train_test_split(
+        eval_df[FEATURE_COLUMNS],
+        eval_df["congestion"],
+        test_size=0.2,
+        random_state=42,
+        stratify=eval_df["congestion"]
+    )
+    
+    # Reconstruct test dataframe with features and target
+    test_df = X_test.copy()
+    test_df["congestion"] = y_test.values
+    
+    # Limit test set size for visualization
+    if len(test_df) > VIZ_SAMPLE_SIZE:
+        test_df = test_df.sample(VIZ_SAMPLE_SIZE, random_state=42)
 
-    y_true = eval_df["congestion"].astype(int)
-    y_pred = _model.predict(eval_df[FEATURE_COLUMNS])
+    y_true = test_df["congestion"].astype(int)
+    y_pred = _model.predict(test_df[FEATURE_COLUMNS])
 
     return {
         "accuracy": float(accuracy_score(y_true, y_pred)),
