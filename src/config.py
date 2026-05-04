@@ -31,7 +31,7 @@ MODEL_FEATURES = [
 TARGET_COLUMN = "congestion_flag"
 MAX_ROWS = 50_000
 RANDOM_STATE = 42
-PREDICTION_THRESHOLD = 0.65
+PREDICTION_THRESHOLD = 0.50
 
 MODEL_PATH = MODEL_DIR / "model.pkl"
 LATEST_MODEL_PATH = MODEL_DIR / "latest_model.pkl"
@@ -41,7 +41,7 @@ BEST_PARAMS_PATH = MODEL_DIR / "best_params.json"
 
 DEFAULT_MODEL_PARAMS = {
     "n_estimators": 200,
-    "max_depth": 10,
+    "max_depth": 14,
     "min_samples_leaf": 5,
     "class_weight": "balanced",
     "random_state": RANDOM_STATE,
