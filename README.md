@@ -38,20 +38,24 @@ Traditional systems are **reactive** and lack predictive intelligence.
 
 ## 🧠 System Architecture
 
-```text
-Raw CICIDS Data
-      ↓
-Data Loading & Cleaning
-      ↓
-Feature Engineering
-      ↓
-Model Training (Random Forest)
-      ↓
-Prediction Engine
-      ↓
-Streamlit Dashboard
-      ↓
-Insights + Recommendations
+```mermaid
+graph LR
+    A["📥 Raw CICIDS Data"] --> B["🧹 Data Cleaning"]
+    B --> C["⚙️ Feature Engineering"]
+    C --> D["🤖 Model Training<br/>Random Forest"]
+    D --> E["💾 Model Registry<br/>.pkl Storage"]
+    E --> F["🎯 Prediction Engine"]
+    F --> G["📊 Streamlit Dashboard"]
+    G --> H["📈 Monitoring &<br/>Insights"]
+    
+    style A fill:#1e40af,stroke:#1e3a8a,color:#fff
+    style B fill:#2563eb,stroke:#1e40af,color:#fff
+    style C fill:#3b82f6,stroke:#2563eb,color:#fff
+    style D fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style E fill:#ec4899,stroke:#be185d,color:#fff
+    style F fill:#f59e0b,stroke:#d97706,color:#fff
+    style G fill:#10b981,stroke:#059669,color:#fff
+    style H fill:#06b6d4,stroke:#0891b2,color:#fff
 ```
 
 ---
