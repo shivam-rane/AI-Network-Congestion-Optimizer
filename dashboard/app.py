@@ -421,6 +421,124 @@ def input_root_causes(df: pd.DataFrame, latency: float, throughput: float, packe
     return causes
 
 
+def show_ml_pipeline_overview() -> None:
+    """Render the ML Pipeline flow with 7 stages as interactive cards."""
+    st.subheader("🔄 ML Pipeline Overview")
+
+    pipeline_stages = [
+        {
+            "icon": "📊",
+            "title": "Data Collection",
+            "description": "Raw CICIDS traffic ingestion",
+            "highlight": False,
+        },
+        {
+            "icon": "🔧",
+            "title": "Data Processing",
+            "description": "Cleaning & normalization",
+            "highlight": False,
+        },
+        {
+            "icon": "⚙️",
+            "title": "Feature Engineering",
+            "description": "Latency, throughput, loss",
+            "highlight": False,
+        },
+        {
+            "icon": "🤖",
+            "title": "Model Training",
+            "description": "Random Forest classifier",
+            "highlight": False,
+        },
+        {
+            "icon": "🎯",
+            "title": "Prediction",
+            "description": "Congestion detection",
+            "highlight": True,
+        },
+        {
+            "icon": "🧠",
+            "title": "Explainability",
+            "description": "SHAP interpretability",
+            "highlight": False,
+        },
+        {
+            "icon": "💡",
+            "title": "Insights & Actions",
+            "description": "Recommendations & alerts",
+            "highlight": False,
+        },
+    ]
+
+    cols = st.columns([1, 0.3, 1, 0.3, 1, 0.3, 1])
+
+    for idx, stage in enumerate(pipeline_stages):
+        if idx % 2 == 0:
+            col_idx = idx
+        else:
+            col_idx = idx
+
+        if col_idx < len(cols):
+            with cols[col_idx]:
+                border_color = "#06b6d4" if stage["highlight"] else "#475569"
+                bg_color = "#164e63" if stage["highlight"] else "#1e293b"
+                text_color = "#f8fafc"
+
+                st.markdown(
+                    f"""
+                    <div style="
+                        border: 2px solid {border_color};
+                        border-radius: 12px;
+                        padding: 16px 12px;
+                        background: {bg_color};
+                        text-align: center;
+                        transition: all 0.3s ease;
+                        min-height: 140px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                    ">
+                        <div style="font-size: 2.5rem; margin-bottom: 8px;">{stage['icon']}</div>
+                        <div style="font-size: 0.95rem; font-weight: 700; color: {text_color}; margin-bottom: 4px;">
+                            {stage['title']}
+                        </div>
+                        <div style="font-size: 0.8rem; color: #cbd5e1;">
+                            {stage['description']}
+                        </div>
+                        {
+                            '<div style="font-size: 0.75rem; color: #06b6d4; margin-top: 8px; font-weight: 600;">ACTIVE</div>'
+                            if stage['highlight']
+                            else ''
+                        }
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+        else:
+            with cols[col_idx]:
+                st.markdown(
+                    """
+                    <div style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 140px;
+                        font-size: 1.8rem;
+                        color: #475569;
+                    ">
+                    →
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    st.markdown("")
+    st.info(
+        "**Current Stage:** Prediction Engine Active | The model analyzes network KPIs in real-time "
+        "to detect congestion and provide actionable insights."
+    )
+
+
 def overview_tab(df: pd.DataFrame, df_sample: pd.DataFrame, model) -> None:
     """Render high-level network KPIs."""
     st.header("📊 Overview")
@@ -441,6 +559,9 @@ def overview_tab(df: pd.DataFrame, df_sample: pd.DataFrame, model) -> None:
         kpi_card("Avg Latency", f"{metrics['avg_latency']:,.2f}", "#7c3aed")
     with col4:
         kpi_card("Avg Throughput", f"{metrics['avg_throughput']:,.2f}", "#059669")
+
+    st.markdown("---")
+    show_ml_pipeline_overview()
 
     st.markdown("---")
     st.subheader("Model Performance")
