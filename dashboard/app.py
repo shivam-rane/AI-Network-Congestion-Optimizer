@@ -26,7 +26,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.data_loader import load_data
-from src.features import create_features
+from src.features import create_features, prepare_model_features
 from src.predict import Predictor
 
 
@@ -166,47 +166,38 @@ def sample_for_visualization(df: pd.DataFrame, sample_size: int = VIZ_SAMPLE_SIZ
 @st.cache_data
 def compute_dashboard_metrics(df: pd.DataFrame) -> dict:
     """Precompute reusable dashboard metrics outside tab rendering."""
+    metrics_df = clean_plot_df(df, FEATURE_COLUMNS + ["congestion"]).copy()
+    metrics_df["latency"] = metrics_df["latency"].clip(upper=metrics_df["latency"].quantile(0.99))
+    metrics_df["throughput"] = metrics_df["throughput"].clip(upper=metrics_df["throughput"].quantile(0.99))
+
     return {
-        "rows": len(df),
+        "rows": len(metrics_df),
         "features": len(FEATURE_COLUMNS),
         "missing_values": int(df[FEATURE_COLUMNS + ["congestion"]].isna().sum().sum()),
-        "congestion_rate": float(df["congestion"].mean() * 100),
-        "avg_latency": float(df["latency"].mean()),
-        "avg_throughput": float(df["throughput"].mean()),
-        "latency_threshold": float(df["latency"].quantile(0.75)),
-        "throughput_threshold": float(df["throughput"].quantile(0.25)),
+        "congestion_rate": float(metrics_df["congestion"].mean() * 100),
+        "avg_latency": float(metrics_df["latency"].mean()),
+        "avg_throughput": float(metrics_df["throughput"].mean()),
+        "latency_threshold": float(metrics_df["latency"].quantile(0.75)),
+        "throughput_threshold": float(metrics_df["throughput"].quantile(0.25)),
     }
 
 
 @st.cache_data
 def compute_model_metrics(_model, df: pd.DataFrame) -> dict:
-    """Evaluate the loaded model on test set only (avoiding overfitting assessment).
-    
-    Uses 80/20 train/test split with random_state=42 to match training pipeline.
-    Evaluates metrics ONLY on test set for realistic generalization performance.
-    """
-    # Clean data first
-    eval_df = clean_plot_df(df, FEATURE_COLUMNS + ["congestion"]).copy()
-    
-    # Perform 80/20 split to get test set (matches training split)
-    X_train, X_test, y_train, y_test = train_test_split(
-        eval_df[FEATURE_COLUMNS],
-        eval_df["congestion"],
-        test_size=0.2,
-        random_state=42,
-        stratify=eval_df["congestion"]
-    )
-    
-    # Reconstruct test dataframe with features and target
-    test_df = X_test.copy()
-    test_df["congestion"] = y_test.values
-    
-    # Limit test set size for visualization
-    if len(test_df) > VIZ_SAMPLE_SIZE:
-        test_df = test_df.sample(VIZ_SAMPLE_SIZE, random_state=42)
+    """Evaluate the loaded model on a fresh 20% split from raw CICIDS data."""
+    eval_df = create_features(df)
+    eval_df = clean_plot_df(eval_df, FEATURE_COLUMNS + ["congestion"]).copy()
 
-    y_true = test_df["congestion"].astype(int)
-    y_pred = _model.predict(test_df[FEATURE_COLUMNS])
+    _, X_test, _, y_test = train_test_split(
+        eval_df[FEATURE_COLUMNS],
+        eval_df["congestion"].astype(int),
+        test_size=0.2,
+        random_state=99,
+        stratify=eval_df["congestion"].astype(int),
+    )
+
+    y_true = y_test.astype(int)
+    y_pred = _model.predict(prepare_model_features(X_test))
 
     return {
         "accuracy": float(accuracy_score(y_true, y_pred)),
@@ -402,13 +393,15 @@ def dynamic_suggestions(
     throughput: float,
     packet_loss: float,
     congestion_prob: float = 0.0,
+    is_congested: bool = False,
 ) -> list[str]:
     """Generate input-specific optimization actions."""
     suggestions = []
     latency_threshold = float(df["latency"].quantile(0.75))
     throughput_threshold = float(df["throughput"].quantile(0.25))
+    packet_loss_threshold = float(df["packet_loss"].quantile(0.90))
 
-    if packet_loss > 0.5:
+    if packet_loss > 0.30 or packet_loss > packet_loss_threshold:
         suggestions.append("Check cables, hardware, and reduce packet drops")
     if latency > latency_threshold:
         suggestions.append("Optimize routing paths or reduce hops")
@@ -416,6 +409,8 @@ def dynamic_suggestions(
         suggestions.append("Increase bandwidth or load balance traffic")
     if congestion_prob > 0.9:
         suggestions.append("Immediate load balancing required")
+    elif is_congested and not suggestions:
+        suggestions.append("Investigate model-highlighted congestion and monitor affected flows")
 
     if not suggestions:
         suggestions.append("System operating normally")
@@ -423,20 +418,29 @@ def dynamic_suggestions(
     return suggestions
 
 
-def input_root_causes(df: pd.DataFrame, latency: float, throughput: float, packet_loss: float) -> list[str]:
+def input_root_causes(
+    df: pd.DataFrame,
+    latency: float,
+    throughput: float,
+    packet_loss: float,
+    is_congested: bool = False,
+) -> list[str]:
     """Explain user-entered network risk using weighted operational thresholds."""
     causes = []
     latency_threshold = float(df["latency"].quantile(0.75))
     throughput_threshold = float(df["throughput"].quantile(0.25))
+    packet_loss_threshold = float(df["packet_loss"].quantile(0.90))
 
-    if packet_loss > 0.5:
+    if packet_loss > 0.30 or packet_loss > packet_loss_threshold:
         causes.append("High packet loss → unstable transmission")
     if latency > latency_threshold:
         causes.append("High latency → routing delay")
     if throughput < throughput_threshold:
         causes.append("Low throughput → bandwidth bottleneck")
 
-    if not causes:
+    if is_congested and not causes:
+        causes.append("Model detected multi-factor congestion risk")
+    elif not causes:
         causes.append("No major issue detected")
 
     return causes
@@ -466,7 +470,7 @@ def overview_tab(df: pd.DataFrame, df_sample: pd.DataFrame, model) -> None:
     st.markdown("---")
     st.subheader("Model Performance")
     try:
-        model_metrics = compute_model_metrics(model, df)
+        model_metrics = compute_model_metrics(model, get_data())
         metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
         metric_col1.metric("Accuracy", f"{model_metrics['accuracy'] * 100:.2f}%")
         metric_col2.metric("Precision", f"{model_metrics['precision'] * 100:.2f}%")
@@ -824,21 +828,18 @@ def prediction_control_tab(df: pd.DataFrame, predictor: Predictor, feature_impor
     input_col2.metric("Packet Loss", f"{packet_loss:.2f}")
     input_col3.metric("Throughput", f"{throughput:.2f}")
 
-    if packet_loss > 0.2:
-        warning = "High Packet Loss"
-    elif latency > 1000:
-        warning = "High Latency"
-    elif throughput < 0.2:
-        warning = "Low Throughput"
-    else:
-        warning = "System Normal"
-
     st.divider()
     st.caption("Prediction uses the trained model loaded from models/network_model.pkl.")
 
     if st.sidebar.button("🚀 Analyze Network", type="primary"):
         pred, prob = predictor.predict(latency, throughput, packet_loss)
         prediction = "Congestion Detected" if int(pred) == 1 else "Normal Network"
+        if prob > 0.70:
+            warning = "Critical Congestion Detected"
+        elif prob > 0.40:
+            warning = "Moderate Congestion Risk"
+        else:
+            warning = "System Normal"
         input_row = pd.DataFrame(
             [{"latency": latency, "throughput": throughput, "packet_loss": packet_loss}],
             columns=FEATURE_COLUMNS,
@@ -858,16 +859,18 @@ def prediction_control_tab(df: pd.DataFrame, predictor: Predictor, feature_impor
             st.subheader("System Warning")
             if warning == "System Normal":
                 st.success(warning)
-            else:
+            elif warning == "Moderate Congestion Risk":
                 st.warning(warning)
+            else:
+                st.error(warning)
 
             st.subheader("Root Cause Analysis")
-            for cause in input_root_causes(df, latency, throughput, packet_loss):
+            for cause in input_root_causes(df, latency, throughput, packet_loss, int(pred) == 1):
                 st.write(f"• {cause}")
 
         with col2:
             st.subheader("Suggested Actions")
-            for suggestion in dynamic_suggestions(df, latency, throughput, packet_loss, prob):
+            for suggestion in dynamic_suggestions(df, latency, throughput, packet_loss, prob, int(pred) == 1):
                 st.markdown(f"- {suggestion}")
 
         st.markdown("---")
