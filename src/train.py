@@ -185,7 +185,7 @@ def make_random_forest(params):
         max_features="sqrt",
         class_weight="balanced",
         random_state=MODEL_RANDOM_STATE,
-        n_jobs=-1,
+        n_jobs=1,
     )
 
 

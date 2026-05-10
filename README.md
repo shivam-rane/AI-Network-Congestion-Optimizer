@@ -1,6 +1,6 @@
 # 🚀 AI Telecom Network Congestion Optimizer
 
-An AI-powered network intelligence system that detects, predicts, and explains congestion in telecom networks using real-world traffic data.
+An AI-powered network intelligence system that detects, predicts, explains, and supports optimization decisions for telecom network congestion using real-world traffic data.
 
 ---
 
@@ -20,19 +20,20 @@ Traditional systems are **reactive** and lack predictive intelligence.
 * Detect congestion early
 * Predict network conditions
 * Explain root causes
-* Suggest actionable optimizations
+* Suggest actionable optimizations and load-balancing actions
 
 ---
 
 ## 🎯 Key Features
 
 * 📊 Real-time network analytics dashboard
-* 🔮 ML-based congestion prediction
-* ⚠️ Early warning system (Normal / Warning / Critical)
+* 🔮 Dynamic ML-based congestion prediction
+* ⚠️ Probability-based alerts (Normal / Warning / Critical)
 * 🧠 Root cause analysis (data-driven)
-* 💡 Dynamic optimization suggestions
-* 🗼 Tower load simulation and optimization
+* 💡 Dynamic recommendations and optimization suggestions
+* 🗼 Tower load balancing simulation and optimization
 * 📉 Explainable AI using SHAP
+* ⚙️ Threshold-tuned predictions with rule-based safety upgrades
 
 ---
 
@@ -88,6 +89,8 @@ Since telecom KPIs are not directly available, features are derived:
 
 * Model: **Random Forest Classifier**
 
+Random Forest is used because telecom congestion patterns are often nonlinear and depend on interactions between latency, throughput, and packet loss. Tree ensembles can capture these feature interactions without requiring a strictly linear decision boundary, making them suitable for congestion prediction where multiple moderate signals can combine into a high-risk network state.
+
 * Input features:
 
   * latency
@@ -96,7 +99,14 @@ Since telecom KPIs are not directly available, features are derived:
 
 * Target:
 
-  * congestion (derived from thresholds)
+  * congestion (from CICIDS labels with packet-loss safety handling)
+
+* Prediction approach:
+
+  * probability-based congestion scoring
+  * threshold-tuned classification
+  * balanced evaluation with precision, recall, and F1 score
+  * safety upgrades for high-risk packet-loss, latency, and throughput conditions
 
 ---
 
@@ -104,12 +114,14 @@ Since telecom KPIs are not directly available, features are derived:
 
 | Metric    | Value              |
 | --------- | ------------------ |
-| Accuracy  | ~85–92%            |
-| Precision | Balanced           |
-| Recall    | High (prioritized) |
-| F1 Score  | Balanced           |
+| Accuracy  | 96.92%             |
+| Precision | 90.47%             |
+| Recall    | 95.51%             |
+| F1 Score  | 92.92%             |
 
-👉 Model is tuned to **avoid missing congestion events (high recall)**
+Evaluation uses a clean 80/20 stratified train/test split with `random_state=99` for test evaluation, separate from the model training seed. Metrics are reported only on unseen test data to avoid data leakage and keep performance realistic.
+
+👉 Model selection balances overall accuracy with congestion recall, so the system avoids missing risky congestion cases while still maintaining strong precision.
 
 ---
 
@@ -140,7 +152,7 @@ Based on prediction probability:
 
 ## 💡 Intelligent Suggestion Engine
 
-Dynamic recommendations based on network state:
+Dynamic recommendations based on network state and prediction probability:
 
 * High latency → optimize routing
 * High packet loss → improve signal quality
@@ -153,7 +165,7 @@ Dynamic recommendations based on network state:
 
 * Simulates multiple network towers
 * Identifies overloaded nodes
-* Suggests traffic redistribution strategies
+* Suggests traffic redistribution and load-balancing strategies
 
 ---
 
@@ -163,7 +175,7 @@ Dynamic recommendations based on network state:
 * Network Analytics (correlation, distributions)
 * Time Intelligence (trend + spikes)
 * Tower Optimization
-* Prediction & Control panel
+* Prediction & Control panel with dynamic alerts and recommendations
 
 ---
 

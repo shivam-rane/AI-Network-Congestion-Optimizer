@@ -8,3 +8,7 @@ joblib
 optuna
 pytest
 shap
+gymnasium
+stable-baselines3
+torch
+reportlab
