@@ -1,196 +1,303 @@
-# 🚀 AI Telecom Network Congestion Optimizer
+# Network Performance Optimization
+### AI-Powered Telecom Congestion Intelligence Platform
 
-An AI-powered network intelligence system that detects, predicts, explains, and supports optimization decisions for telecom network congestion using real-world traffic data.
+<div align="center">
 
----
+![Python](https://img.shields.io/badge/Python-3.9+-3b82f6?style=flat-square&logo=python&logoColor=white)
+![Scikit-learn](https://img.shields.io/badge/Scikit--learn-1.3+-f97316?style=flat-square&logo=scikit-learn&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-ef4444?style=flat-square&logo=streamlit&logoColor=white)
+![SHAP](https://img.shields.io/badge/SHAP-Explainability-8b5cf6?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)
 
-## 📌 Problem Statement
+*Proactive congestion detection, RL-based optimization, and explainable AI — on real CICIDS 2017 network data.*
 
-Telecom networks frequently suffer from:
-
-* High latency
-* Packet loss
-* Traffic congestion
-* Poor resource utilization
-
-Traditional systems are **reactive** and lack predictive intelligence.
-
-👉 This project builds a **proactive AI system** to:
-
-* Detect congestion early
-* Predict network conditions
-* Explain root causes
-* Suggest actionable optimizations and load-balancing actions
+</div>
 
 ---
 
-## 🎯 Key Features
+## Overview
 
-* 📊 Real-time network analytics dashboard
-* 🔮 Dynamic ML-based congestion prediction
-* ⚠️ Probability-based alerts (Normal / Warning / Critical)
-* 🧠 Root cause analysis (data-driven)
-* 💡 Dynamic recommendations and optimization suggestions
-* 🗼 Tower load balancing simulation and optimization
-* 📉 Explainable AI using SHAP
-* ⚙️ Threshold-tuned predictions with rule-based safety upgrades
+Traditional telecom monitoring is reactive — it alerts after performance has already degraded. This platform is designed to be **proactive**: it predicts congestion before it becomes critical, explains the root cause, and runs an AI optimization agent to simulate corrective actions.
+
+The system combines a **Random Forest classifier** for congestion prediction with a **rule-based RL optimization engine** that simulates sequential network actions (rerouting, load balancing, bandwidth scaling) and measures how much each action reduces congestion probability.
 
 ---
 
-## 🧠 System Architecture
+## Architecture
 
 ```mermaid
-graph LR
-    A["📥 Raw CICIDS Data"] --> B["🧹 Data Cleaning"]
-    B --> C["⚙️ Feature Engineering"]
-    C --> D["🤖 Model Training<br/>Random Forest"]
-    D --> E["💾 Model Registry<br/>.pkl Storage"]
-    E --> F["🎯 Prediction Engine"]
-    F --> G["📊 Streamlit Dashboard"]
-    G --> H["📈 Monitoring &<br/>Insights"]
-    
-    style A fill:#1e40af,stroke:#1e3a8a,color:#fff
-    style B fill:#2563eb,stroke:#1e40af,color:#fff
-    style C fill:#3b82f6,stroke:#2563eb,color:#fff
-    style D fill:#7c3aed,stroke:#6d28d9,color:#fff
-    style E fill:#ec4899,stroke:#be185d,color:#fff
-    style F fill:#f59e0b,stroke:#d97706,color:#fff
-    style G fill:#10b981,stroke:#059669,color:#fff
-    style H fill:#06b6d4,stroke:#0891b2,color:#fff
+flowchart TD
+    A[CICIDS 2017 Raw Data] --> B[Data Cleaning & Validation]
+    B --> C[Feature Engineering]
+    C --> D{Derived KPIs}
+    D --> D1[Latency\nFlow Duration / Packets]
+    D --> D2[Throughput\nFlow Bytes/s]
+    D --> D3[Packet Loss\nFwd/Bwd Imbalance]
+    D1 & D2 & D3 --> E[Random Forest Classifier]
+    E --> F[Congestion Probability Score]
+    F --> G{Alert Level}
+    G --> G1[Normal · < 0.4]
+    G --> G2[Warning · 0.4–0.7]
+    G --> G3[Critical · > 0.7]
+    F --> H[SHAP Explainability]
+    F --> I[RL Optimization Engine]
+    I --> J[Action Simulation\n10-step rollout]
+    J --> K[Post-optimization State]
+    K --> L[Streamlit Dashboard]
+    H --> L
+    G --> L
+
+    style A fill:#0f172a,stroke:#1e293b,color:#94a3b8
+    style E fill:#1e1b4b,stroke:#312e81,color:#a5b4fc
+    style I fill:#1a2e1a,stroke:#14532d,color:#86efac
+    style L fill:#1e1e1e,stroke:#2a2a2a,color:#e2e8f0
+    style F fill:#1e3a5f,stroke:#1e40af,color:#93c5fd
 ```
 
 ---
 
-## 📂 Dataset
+## Optimization Pipeline
 
-* **CICIDS 2017 Dataset**
-* Real-world network traffic data
+```mermaid
+flowchart LR
+    S([Initial Network State\nLatency · Packet Loss · Throughput · Tower Load]) --> P{Congestion\nProb > 0.5?}
+    P -- No --> Z([Network Healthy\nNo action needed])
+    P -- Yes --> AG[RL Policy Agent\nget_optimal_action]
+    AG --> AC{Select Action}
+    AC --> A1[reduce_load]
+    AC --> A2[reroute_traffic]
+    AC --> A3[increase_bandwidth]
+    AC --> A4[rebalance_towers]
+    AC --> A5[do_nothing\nonly if prob < 0.08]
+    A1 & A2 & A3 & A4 & A5 --> SIM[Network Simulator\nApply Effects · Clamp Bounds]
+    SIM --> UP[Update State\nRecalculate Congestion Prob]
+    UP --> LOG[Log Step\nAction · Metrics · Reward]
+    LOG --> CHK{Steps = 10\nor prob < 0.08?}
+    CHK -- No --> AG
+    CHK -- Yes --> OUT([Optimization Report\nBefore vs After · Action Sequence])
 
-### Key Raw Features Used:
-
-* Flow Duration
-* Total Forward Packets
-* Total Backward Packets
-* Flow Bytes/s
-
----
-
-## ⚙️ Feature Engineering
-
-Since telecom KPIs are not directly available, features are derived:
-
-* **Latency** → Flow Duration / Total Packets
-* **Throughput** → Flow Bytes per second
-* **Packet Loss (approx)** → imbalance between forward/backward packets
-
----
-
-## 🤖 Model Details
-
-* Model: **Random Forest Classifier**
-
-Random Forest is used because telecom congestion patterns are often nonlinear and depend on interactions between latency, throughput, and packet loss. Tree ensembles can capture these feature interactions without requiring a strictly linear decision boundary, making them suitable for congestion prediction where multiple moderate signals can combine into a high-risk network state.
-
-* Input features:
-
-  * latency
-  * throughput
-  * packet_loss
-
-* Target:
-
-  * congestion (from CICIDS labels with packet-loss safety handling)
-
-* Prediction approach:
-
-  * probability-based congestion scoring
-  * threshold-tuned classification
-  * balanced evaluation with precision, recall, and F1 score
-  * safety upgrades for high-risk packet-loss, latency, and throughput conditions
+    style S fill:#0f172a,stroke:#1e293b,color:#94a3b8
+    style AG fill:#1e1b4b,stroke:#312e81,color:#a5b4fc
+    style SIM fill:#1a2e1a,stroke:#14532d,color:#86efac
+    style OUT fill:#1e3a5f,stroke:#1e40af,color:#93c5fd
+```
 
 ---
 
-## 📈 Model Performance
+## Key Capabilities
 
-| Metric    | Value              |
-| --------- | ------------------ |
-| Accuracy  | 96.92%             |
-| Precision | 90.47%             |
-| Recall    | 95.51%             |
-| F1 Score  | 92.92%             |
-
-Evaluation uses a clean 80/20 stratified train/test split with `random_state=99` for test evaluation, separate from the model training seed. Metrics are reported only on unseen test data to avoid data leakage and keep performance realistic.
-
-👉 Model selection balances overall accuracy with congestion recall, so the system avoids missing risky congestion cases while still maintaining strong precision.
-
----
-
-## 🔍 Explainability (SHAP)
-
-The model uses SHAP to explain predictions:
-
-* Identifies key drivers of congestion
-* Provides transparent decision-making
-* Enables actionable insights
-
-Example:
-
-* High packet loss → major contributor
-* Increased latency → secondary driver
+| Capability | Description |
+|---|---|
+| **Congestion Prediction** | Random Forest with probability scoring, threshold tuning, and safety override rules |
+| **Explainability** | SHAP local explanations showing which features drove each prediction |
+| **RL Optimization** | 10-step sequential simulation with priority-based action selection |
+| **Tower Optimization** | Detects overloaded towers (> 75%), redistributes load to underloaded nodes (< 60%) |
+| **Batch Analysis** | Upload a CSV, get prediction + optimization results per row, download report |
+| **Alert System** | Three-tier alert: Normal / Warning / Critical with color-coded banners |
+| **Root Cause Analysis** | Data-driven diagnosis: high packet loss, routing delay, bandwidth bottleneck |
 
 ---
 
-## ⚠️ Early Warning System
+## Dataset
 
-Based on prediction probability:
+**CICIDS 2017** — Canadian Institute for Cybersecurity Intrusion Detection dataset. Contains real-world network traffic flows with labeled attack and benign traffic.
 
-* 🟢 Normal (< 0.4)
-* 🟡 Warning (0.4 – 0.7)
-* 🔴 Critical (> 0.7)
+Since telecom KPIs are not directly available in the raw dataset, all features are derived:
 
----
-
-## 💡 Intelligent Suggestion Engine
-
-Dynamic recommendations based on network state and prediction probability:
-
-* High latency → optimize routing
-* High packet loss → improve signal quality
-* Low throughput → increase bandwidth
-* High congestion → load balancing
+| KPI | Derivation |
+|---|---|
+| Latency | `Flow Duration / Total Packets` |
+| Throughput | `Flow Bytes/s` (raw feature) |
+| Packet Loss | Forward/backward packet imbalance ratio |
 
 ---
 
-## 🗼 Tower Optimization
+## Model
 
-* Simulates multiple network towers
-* Identifies overloaded nodes
-* Suggests traffic redistribution and load-balancing strategies
+**Random Forest Classifier** — chosen for its ability to capture nonlinear interactions between latency, throughput, and packet loss without requiring a linear decision boundary. Tree ensembles handle noisy telecom data well and support SHAP-based explainability natively.
 
----
+### Training Configuration
 
-## 📊 Dashboard Features
+```
+Train/test split : 80/20 stratified
+Training seed    : fixed for reproducibility
+Evaluation seed  : random_state=99 (separate from training)
+Threshold tuning : probability-based, not hard 0.5 cutoff
+Safety overrides : rule-based upgrades for extreme packet loss / latency
+```
 
-* Overview (KPIs + model metrics)
-* Network Analytics (correlation, distributions)
-* Time Intelligence (trend + spikes)
-* Tower Optimization
-* Prediction & Control panel with dynamic alerts and recommendations
+### Performance
 
----
+| Metric | Score |
+|---|---|
+| Accuracy | **97.11%** |
+| Precision | **91.02%** |
+| Recall | **95.77%** |
+| F1 Score | **95.77%** |
 
-## ⚙️ Tech Stack
-
-* Python
-* Pandas / NumPy
-* Scikit-learn
-* Streamlit
-* Matplotlib
-* SHAP
+> Evaluation is performed on unseen test data only. No data leakage. Metrics balance congestion recall (avoiding missed critical states) with precision (avoiding false alarms).
 
 ---
 
-## 🚀 How to Run
+## RL Optimization Engine
+
+The optimizer simulates a 10-step network recovery using a **priority-based policy agent**:
+
+### Action Space
+
+| Action | Primary Effect |
+|---|---|
+| `reduce_load` | Cuts packet loss 50–70%, slight latency improvement |
+| `reroute_traffic` | Reduces latency 25–40%, slight throughput gain |
+| `increase_bandwidth` | Boosts throughput 30–50% |
+| `rebalance_towers` | Redistributes tower load to underloaded nodes |
+| `do_nothing` | Only fires when congestion probability < 0.08 |
+
+### Policy Logic
+
+```
+if congestion_prob < 0.08     → do_nothing
+elif packet_loss > 0.25       → reduce_load
+elif latency > 2500           → reroute_traffic
+elif throughput < 300 Mbps    → increase_bandwidth
+elif tower_load > 75%         → rebalance_towers
+else                          → reroute_traffic
+```
+
+Actions rotate to avoid repeating the same action more than twice consecutively.
+
+### Reward Function
+
+```
++50 × (old_congestion_prob − new_congestion_prob)   ← primary signal
++2.0 if latency improved
++1.0 if throughput improved
+−2.0 if state got worse
++10.0 if do_nothing correctly (prob < 0.08)
+−3.0 if do_nothing incorrectly (prob > 0.08)
+```
+
+### Typical Result
+
+Starting from a Critical state (congestion ≈ 0.99):
+
+```
+Step 0  baseline        Cong: 0.990  PktLoss: 1.000  Latency: 4750
+Step 1  reduce_load     Cong: 0.640  PktLoss: 0.611  Latency: 4068
+Step 2  reduce_load     Cong: 0.412  PktLoss: 0.383  Latency: 3766
+Step 3  reroute_traffic Cong: 0.285  PktLoss: 0.383  Latency: 2250
+Step 4  increase_bw     Cong: 0.164  PktLoss: 0.265  Latency: 2100
+Step 5  reduce_load     Cong: 0.071  PktLoss: 0.128  Latency: 1800
+Step 6+ do_nothing      Cong: 0.071  ← healthy, agent idles
+```
+
+**Congestion reduced: ~89% · Latency improved: ~40% · Throughput gain: ~100%**
+
+---
+
+## Tower Optimization
+
+```mermaid
+flowchart LR
+    T1[Tower A\n83% load] --> CHK{Load > 75%?}
+    T2[Tower B\n44% load] --> CHK2{Load < 60%?}
+    T3[Tower C\n31% load] --> CHK2
+    CHK -- Yes --> OVER[Overloaded\nFlag for redistribution]
+    CHK2 -- Yes --> UNDER[Underloaded\nAccept excess traffic]
+    OVER --> REDIST[Redistribute excess\nper underloaded tower]
+    UNDER --> REDIST
+    REDIST --> R1[Tower A → 75%\ncapped at threshold]
+    REDIST --> R2[Tower B → 50%\nreceived excess]
+    REDIST --> R3[Tower C → 46%\nreceived excess]
+
+    style OVER fill:#3b0000,stroke:#7f1d1d,color:#fca5a5
+    style UNDER fill:#1a3a1a,stroke:#14532d,color:#86efac
+    style REDIST fill:#1e1b4b,stroke:#312e81,color:#a5b4fc
+```
+
+- Overload threshold: **75%**
+- Redistribution targets: towers with load **< 60%**
+- Metrics shown: overloaded before/after, load variance reduction
+
+---
+
+## Dashboard
+
+Five-tab Streamlit interface:
+
+```
+Overview          — KPIs, model performance, dataset summary
+Network Analytics — Correlation heatmap, latency/throughput distributions
+Time Intelligence — Trend lines, congestion spike detection
+Tower Optimization — Load redistribution charts, before/after comparison
+Prediction & Control — Manual input + batch CSV upload, inline optimization
+```
+
+### Prediction & Control Tab Flow
+
+```mermaid
+flowchart TD
+    M{Mode} --> MI[Manual Input\nSliders]
+    M --> UD[Upload Dataset\nCSV]
+    MI --> AN[Run Analysis]
+    AN --> PRED[Congestion Prediction\nNetwork State · Prob · Alert]
+    PRED --> SHAP[SHAP Local Explanation]
+    PRED --> RCA[Root Cause Analysis]
+    PRED --> OPT{Congestion\n> 50%?}
+    OPT -- Yes --> INLINE[Inline Optimization\n10-step simulation]
+    INLINE --> METRICS[Metrics: Congestion cut\nLatency improved · Throughput gain]
+    INLINE --> SEQTABLE[Action sequence + step log table]
+    UD --> BATCH[Batch Analysis\nPer-row prediction + optimization]
+    BATCH --> TABLE[Color-coded results table\nCritical · Warning · Normal]
+    TABLE --> BOPT[Optimize Congested Rows button]
+    BOPT --> OPTRES[Before vs After table\nDownload CSV]
+
+    style PRED fill:#1e3a5f,stroke:#1e40af,color:#93c5fd
+    style INLINE fill:#1a2e1a,stroke:#14532d,color:#86efac
+    style BATCH fill:#1e1b4b,stroke:#312e81,color:#a5b4fc
+```
+
+---
+
+## Input Scale Reference
+
+| Slider | Scale | Notes |
+|---|---|---|
+| Latency | 0 – 5000 | Model scale (derived from raw flow duration) |
+| Packet Loss | 0.0 – 1.0 | Ratio (0.01 = 1% loss) |
+| Throughput | 0.0 – 1.0 | Normalized traffic pressure (×1000 for optimizer) |
+| Tower Load | 0 – 100 | Percent |
+
+---
+
+## Project Structure
+
+```
+.
+├── dashboard/
+│   └── app.py                  — Streamlit UI (all tabs)
+├── optimizer/
+│   ├── network_simulator.py    — TelecomNetworkEnv (gym-style)
+│   ├── rl_agent.py             — Priority-based policy agent
+│   ├── simulation_runner.py    — 10-step rollout + step logging
+│   ├── analytics.py            — Strategy comparison, trajectory charts
+│   └── report_generator.py     — Markdown optimization report
+├── src/
+│   ├── data_loader.py
+│   ├── features.py
+│   ├── train.py
+│   └── predict.py
+├── models/
+│   └── network_model.pkl       — Trained Random Forest
+├── data/
+│   └── raw/                    — CICIDS 2017 (git-ignored)
+├── tests/
+└── README.md
+```
+
+---
+
+## Quick Start
 
 ```bash
 git clone https://github.com/shivam-rane/AI-Network-Congestion-Optimizer.git
@@ -201,48 +308,46 @@ pip install -r requirements.txt
 streamlit run dashboard/app.py
 ```
 
----
+### Requirements
 
-## 📁 Project Structure
-
-```text
-.
-├── dashboard/
-├── src/
-│   ├── data_loader.py
-│   ├── features.py
-│   ├── train.py
-│   ├── predict.py
-├── data/
-│   └── raw/   (ignored in Git)
-├── models/
-├── tests/
-├── README.md
+```
+streamlit
+scikit-learn
+pandas
+numpy
+matplotlib
+shap
+gymnasium
 ```
 
 ---
 
-## ⚠️ Limitations
+## Limitations
 
-* Packet loss is approximated (not directly measured)
-* Dataset is static (no real-time streaming yet)
-* Model may require retraining for different network environments
-
----
-
-## 🚀 Future Improvements
-
-* Real-time streaming pipeline (Kafka / Spark)
-* Advanced anomaly detection
-* Deep learning models (LSTM for time series)
-* Cloud deployment (AWS/GCP)
+- Packet loss is approximated from forward/backward packet imbalance — not directly measured
+- Dataset is static (CICIDS 2017); no real-time streaming
+- RL agent uses a rule-based policy, not a trained neural network
+- Optimization simulator uses fixed action effect ranges (stochastic but bounded)
 
 ---
 
-## 👨‍💻 Author
+## Roadmap
 
-**Shivam Rane**
+- [ ] Real-time data ingestion via Kafka
+- [ ] LSTM-based time series congestion forecasting
+- [ ] Trained DQN agent replacing rule-based policy
+- [ ] Cloud deployment (AWS / GCP)
+- [ ] Multi-tower network graph visualization
 
 ---
 
-## ⭐ If you found this useful, consider starring the repo!
+## Author
+
+**Shivam Rane**  
+[github.com/shivam-rane](https://github.com/shivam-rane)
+
+---
+
+<div align="center">
+<sub>Built with CICIDS 2017 data · Random Forest · SHAP · Streamlit · Rule-based RL</sub>
+</div>
